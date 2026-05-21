@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup, Comment
 # ─── Configuration ────────────────────────────────────────────────────────────
 
 BASE_URL = "https://miguelsalv.framer.website/"
+SITE_URL = "https://miguelsalv.com"
 OUTPUT_DIR = "."
 
 # ─── Globals ──────────────────────────────────────────────────────────────────
@@ -104,6 +105,20 @@ def process_page(url: str, html: str) -> None:
         to_remove = [attr for attr in tag.attrs if attr.startswith("data-framer")]
         for attr in to_remove:
             del tag[attr]
+
+    # ── Rewrite URLs from Framer domain to real domain ────────────────────
+    for meta in soup.find_all("meta"):
+        for attr in ("content",):
+            val = meta.get(attr, "")
+            if BASE_URL.rstrip("/") in val:
+                page_path = urlparse(url).path
+                meta[attr] = SITE_URL.rstrip("/") + page_path
+
+    for link in soup.find_all("link", rel="canonical"):
+        href = link.get("href", "")
+        if BASE_URL.rstrip("/") in href:
+            page_path = urlparse(url).path
+            link["href"] = SITE_URL.rstrip("/") + page_path
 
     # ── Save HTML ─────────────────────────────────────────────────────────
     with open(page_filepath, "w", encoding="utf-8") as f:
