@@ -93,6 +93,18 @@ def process_page(url: str, html: str) -> None:
         if script.string and "__framer_force" in script.string:
             script.decompose()
 
+    for meta in list(soup.find_all("meta")):
+        name = (meta.get("name") or "").lower()
+        if name.startswith("framer-"):
+            meta.decompose()
+
+    for tag in soup.find_all(True):
+        if tag.attrs is None:
+            continue
+        to_remove = [attr for attr in tag.attrs if attr.startswith("data-framer")]
+        for attr in to_remove:
+            del tag[attr]
+
     # ── Save HTML ─────────────────────────────────────────────────────────
     with open(page_filepath, "w", encoding="utf-8") as f:
         f.write(str(soup))
